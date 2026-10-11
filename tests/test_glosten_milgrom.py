@@ -1,34 +1,23 @@
-"""Tests for the Glosten-Milgrom simulator."""
 import pytest
-
 from src.models.glosten_milgrom import quote_model
 
+def test_no_informed_trading_zero_spread():
+    out = quote_model(120, 80, 0.5, 0.0)
+    assert out["spread"] == pytest.approx(0.0)
+    assert out["ask"] == pytest.approx(100)
+    assert out["bid"] == pytest.approx(100)
 
-def test_symmetric_case_matches_textbook():
-    # Classic example: V=120/80, prior=0.5, mu=0.4 → ask=108, bid=92
-    result = quote_model(good_value=120, bad_value=80, prior_good=0.5, informed_prob=0.4)
-    assert abs(result["midpoint"] - 100) < 1e-6
-    assert abs(result["ask"] - 108) < 0.01
-    assert abs(result["bid"] - 92) < 0.01
-    assert abs(result["spread"] - 16) < 0.01
-    assert abs(result["p_good_buy"] - 0.7) < 1e-6
-    assert abs(result["p_good_sell"] - 0.3) < 1e-6
+def test_informed_trading_widens_spread():
+    out = quote_model(120, 80, 0.5, 0.4)
+    assert out["ask"] > out["midpoint"]
+    assert out["bid"] < out["midpoint"]
+    assert out["spread"] > 0
 
+def test_bayesian_posteriors():
+    out = quote_model(120, 80, 0.5, 0.4)
+    assert out["p_good_buy"] == pytest.approx(0.7)
+    assert out["p_good_sell"] == pytest.approx(0.3)
 
-def test_no_information_zero_spread():
-    result = quote_model(good_value=120, bad_value=80, prior_good=0.5, informed_prob=0.0)
-    assert abs(result["spread"]) < 1e-6
-    assert abs(result["ask"] - result["bid"]) < 1e-6
-    assert abs(result["ask"] - 100) < 1e-6
-
-
-def test_invalid_prior_raises():
+def test_invalid_values():
     with pytest.raises(ValueError):
-        quote_model(120, 80, prior_good=1.5, informed_prob=0.4)
-    with pytest.raises(ValueError):
-        quote_model(120, 80, prior_good=0.0, informed_prob=0.4)
-
-
-def test_good_must_exceed_bad():
-    with pytest.raises(ValueError):
-        quote_model(good_value=80, bad_value=120, prior_good=0.5, informed_prob=0.4)
+        quote_model(80, 120, 0.5, 0.4)

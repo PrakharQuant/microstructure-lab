@@ -11,19 +11,71 @@ from src.models.glosten_milgrom import quote_model
 from src.models.market_impact import simulate_sweep
 
 st.set_page_config(page_title="Microstructure Lab", page_icon="📈", layout="wide")
-st.markdown("""
-<style>
-.block-container {padding-top: 1.5rem; max-width: 1450px;}
-[data-testid="stMetric"] {background: rgba(128,128,128,.08); padding: 14px; border-radius: 10px;}
-.small-note {font-size: .88rem; opacity: .82;}
-</style>
-""", unsafe_allow_html=True)
 
-st.title("📈 Microstructure Lab")
-st.caption("An interactive laboratory for liquidity, bid–ask spreads, and information-based trading.")
+# Theme handling
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+
+def apply_theme():
+    if st.session_state.theme == "dark":
+        st.markdown("""
+        <style>
+        .stApp { background-color: #0e1117; color: #fafafa; }
+        .block-container { padding-top: 1.5rem; max-width: 1450px; }
+        [data-testid="stMetric"] { background: rgba(255,255,255,.05); padding: 14px; border-radius: 10px; }
+        .small-note { font-size: .88rem; opacity: .82; }
+        h1, h2, h3, h4, h5, h6, p, label, .stMarkdown { color: #fafafa !important; }
+        .stTabs [data-baseweb="tab-list"] { background-color: #0e1117; }
+        .stTabs [data-baseweb="tab"] { color: #fafafa; }
+        </style>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <style>
+        .block-container { padding-top: 1.5rem; max-width: 1450px; }
+        [data-testid="stMetric"] { background: rgba(128,128,128,.08); padding: 14px; border-radius: 10px; }
+        .small-note { font-size: .88rem; opacity: .82; }
+        </style>
+        """, unsafe_allow_html=True)
+
+apply_theme()
+
+# Header with credits
+col_title, col_credit = st.columns([3, 1])
+with col_title:
+    st.title("📈 Microstructure Lab")
+    st.markdown("""
+    **Explore why the price you pay differs from the price you receive — even when fundamental value hasn't changed.**
+
+    An interactive laboratory connecting market microstructure theory (Roll 1984, Glosten–Milgrom 1985) to real historical data and transparent simulations. Estimate liquidity proxies, simulate adverse selection, and diagnose where textbook models succeed or fail on actual markets.
+    """)
+with col_credit:
+    st.markdown("""
+    <div style="text-align: right; padding-top: 0.5rem;">
+        <strong>Made by Prakhar Gupta</strong><br>
+        <a href="mailto:bestofprakhar@gmail.com">bestofprakhar@gmail.com</a><br>
+        <a href="https://www.linkedin.com/in/prakhar-gupta-5b7250372/" target="_blank" title="LinkedIn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#0A66C2" style="vertical-align: middle; margin-right: 6px;">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+        </a>
+        <a href="https://x.com/PrakharQuant" target="_blank" title="X / Twitter">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#000000" style="vertical-align: middle;">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.warning("Research note: Yahoo Finance OHLCV data are not a historical order book. Roll estimates calculated from daily closes are exploratory proxies, not direct measurements of quoted or effective spreads. The Glosten–Milgrom and market-impact modules are explicitly labelled simulations.")
 
 with st.sidebar:
+    st.header("Settings")
+    theme = st.radio("Theme", ["Light", "Dark"], index=0 if st.session_state.theme == "light" else 1, horizontal=True)
+    if theme.lower() != st.session_state.theme:
+        st.session_state.theme = theme.lower()
+        st.rerun()
+    st.divider()
     st.header("Market data")
     market = st.selectbox("Market preset", ["US equities / ETFs", "Indian equities / ETFs", "Enter ticker"])
     presets = {
@@ -225,4 +277,4 @@ with tab_method:
     st.markdown("- Roll, R. (1984). A simple implicit measure of the effective bid–ask spread in an efficient market. *The Journal of Finance*.\n- Glosten, L. R., & Milgrom, P. R. (1985). Bid, ask and transaction prices in a specialist market with heterogeneously informed traders. *Journal of Financial Economics*.\n- Campbell, J. Y. *A Course in Asset Pricing*, market microstructure chapter.")
 
 st.divider()
-st.caption("Microstructure Lab · Educational research prototype · Not investment advice")
+st.caption("Microstructure Lab · Educational research prototype by Prakhar Gupta · Not investment advice")
